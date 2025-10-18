@@ -11,7 +11,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+
 downloads/
 eggs/
 .eggs/
@@ -38,7 +38,7 @@ yarn-error.log*
 .yarn-integrity
 
 # React/Vite
-frontend/dist/
+
 frontend/.vite/
 
 # IDE
@@ -62,7 +62,7 @@ Thumbs.db
 .env.production.local
 
 frontend/node_modules/
-frontend/dist/
+
 venv/
 __MACOSX/
 *.pyc
