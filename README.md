@@ -35,31 +35,10 @@ python app.py
 ### 3) Frontend
 Open a new terminal:
 ```bash
-cd "Assignment 4/frontend"
+cd "frontend"
 npm install
 npm run build
 npm run dev
-```
-
-
-## Project Structure
-
-```
-Assignment 4/
-├── frontend/                 # React frontend
-│   ├── src/
-│   │   ├── App.jsx          # Main React component
-│   │   └── main.jsx         # React entry point
-│   ├── index.html           # HTML template
-│   └── package.json         # Node.js dependencies
-├── app.py                   # Flask backend
-├── train_model.py           # Model training script
-├── model.pkl                # Trained model (generated)
-├── requirements.txt         # Python dependencies
-├── Report.tex               # LaTeX report source
-├── dev.sh                   # Development script
-├── deploy.sh                # Production deployment
-└── README.md                # This file
 ```
 
 ## Model Performance
