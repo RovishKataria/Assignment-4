@@ -1,0 +1,24 @@
+services:
+  # Flask backend as a web service
+  - type: web
+    name: assignment4-backend
+    runtime: python          # Use Render’s native Python runtime
+    branch: main             # Deploy from the main branch
+    rootDir: .               # Directory containing app.py and requirements.txt
+    plan: free               # optional: choose the free plan
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+
+  # React frontend as a static site
+  - type: static
+    name: assignment4-frontend
+    branch: main
+    rootDir: frontend        # This tells Render to run commands in the /frontend folder
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist  # Publish the built dist folder
+    envVars:
+      - key: VITE_API_URL    # Tell Vite where to find the API
+        value: https://assignment4-backend.onrender.com/api
