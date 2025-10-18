@@ -18,7 +18,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
-CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
+# CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
+CORS(app, origins=['https://assignment-4-o9gt.onrender.com/'])
 
 # Global variables to store the trained model and scaler
 model = None
