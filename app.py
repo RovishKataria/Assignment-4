@@ -1,149 +1,158 @@
 """
 Assignment 3: User Interface for ML Models
 Backend API for Absenteeism Prediction Model
-
-This Flask application serves the trained model from Assignment 2 and provides
-an API for the frontend interface.
 """
 
+import os
 import pandas as pd
 import numpy as np
 import pickle
-import json
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
 import warnings
 warnings.filterwarnings('ignore')
 
+# ---------------------------------------------------------------------------- #
+#  Flask configuration
+# ---------------------------------------------------------------------------- #
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
-# CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
+
 CORS(app, origins=[
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:5000',
-    'https://assignment-4-o9gt.onrender.com',  # your static site
-    'https://assig4-7h6s.onrender.com'        # if using a different API domain
+    'https://assignment4-hyu2.onrender.com',  # ✅ your Render frontend
+    'https://assignment-4-o9gt.onrender.com',
+    'https://assig4-7h6s.onrender.com'
 ])
 
-
-# Global variables to store the trained model and scaler
+# ---------------------------------------------------------------------------- #
+#  Global variables
+# ---------------------------------------------------------------------------- #
 model = None
 scaler = None
 feature_columns = None
 
+
+# ---------------------------------------------------------------------------- #
+#  Load model safely (works locally & on Render)
+# ---------------------------------------------------------------------------- #
 def load_model():
-    """Load the trained model and scaler from Assignment 2"""
+    """Load the trained model and scaler from file"""
     global model, scaler, feature_columns
-    
+
     try:
-        # Load the model and scaler (we'll create these from Assignment 2)
-        with open('model.pkl', 'rb') as f:
+        # Absolute, platform-safe path
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(BASE_DIR, 'model.pkl')
+
+        with open(model_path, 'rb') as f:
             model_data = pickle.load(f)
             model = model_data['model']
             scaler = model_data['scaler']
-            feature_columns = model_data['feature_names']  # Changed from 'feature_columns' to 'feature_names'
-        print("Model loaded successfully")
-    except FileNotFoundError:
-        print("Model file not found. Please train the model first (python train_model.py).")
-        model = None
-        scaler = None
-        feature_columns = None
+            feature_columns = model_data['feature_names']
 
+        print("✅ Model loaded successfully")
+
+    except FileNotFoundError:
+        print("❌ Model file not found. Please ensure 'model.pkl' is in the same folder as app.py.")
+        model, scaler, feature_columns = None, None, None
+
+
+# ---------------------------------------------------------------------------- #
+#  Health check route
+# ---------------------------------------------------------------------------- #
 @app.route('/api/health', methods=['GET'])
 def health():
-    """Health check and model status"""
     return jsonify({
         'status': 'ok',
         'model_loaded': model is not None,
         'feature_columns': len(feature_columns) if feature_columns is not None else 0
     })
 
+
+# ---------------------------------------------------------------------------- #
+#  Preprocess user input
+# ---------------------------------------------------------------------------- #
 def preprocess_input(data):
-    """Preprocess input data to match the model's expected format"""
-    # Convert to DataFrame
+    """Convert JSON input into the format expected by the model"""
     df = pd.DataFrame([data])
-    
-    # Handle categorical variables (same as in Assignment 2)
-    categorical_cols = ['Reason for absence', 'Month of absence', 'Day of the week', 'Seasons', 
-                        'Hit target', 'Disciplinary failure', 'Education', 'Son', 
-                        'Social drinker', 'Social smoker', 'Pet']
-    
-    # Create dummy variables for categorical columns
+
+    categorical_cols = [
+        'Reason for absence', 'Month of absence', 'Day of the week', 'Seasons',
+        'Hit target', 'Disciplinary failure', 'Education', 'Son',
+        'Social drinker', 'Social smoker', 'Pet'
+    ]
+
     available_cat = [c for c in categorical_cols if c in df.columns]
     df_encoded = pd.get_dummies(df, columns=available_cat, drop_first=True)
-    
-    # Ensure all expected columns are present
+
+    # Add missing columns
     if feature_columns is not None:
         for col in feature_columns:
             if col not in df_encoded.columns:
                 df_encoded[col] = 0
-    
-    # Reorder columns to match training data
-    if feature_columns is not None:
+
+        # Reorder columns
         df_encoded = df_encoded.reindex(columns=feature_columns, fill_value=0)
-    
+
     return df_encoded
 
+
+# ---------------------------------------------------------------------------- #
+#  Serve frontend
+# ---------------------------------------------------------------------------- #
 @app.route('/')
 def index():
-    """Serve the frontend"""
     return send_from_directory(app.static_folder, 'index.html')
+
 
 @app.route('/<path:path>')
 def serve_react_app(path):
-    """Serve frontend for all other routes"""
     return send_from_directory(app.static_folder, 'index.html')
 
+
+# ---------------------------------------------------------------------------- #
+#  Prediction API
+# ---------------------------------------------------------------------------- #
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """API endpoint for making predictions"""
+    """Return absenteeism prediction from model"""
     try:
         if model is None or scaler is None:
-            return jsonify({'error': 'Model not loaded'}), 500
-        
-        # Get input data
-        data = request.json
-        
-        # Preprocess the input
+            return jsonify({'error': 'Model not loaded on server'}), 500
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No input data provided'}), 400
+
         processed_data = preprocess_input(data)
-        
-        # Scale the features
         scaled_data = scaler.transform(processed_data)
-        
-        # Make prediction
         prediction = model.predict(scaled_data)[0]
-        
-        # Simple placeholder confidence score
-        confidence = 0.8
-        
+
         return jsonify({
             'prediction': float(prediction),
-            'confidence': confidence,
+            'confidence': 0.8,
             'message': f'Predicted absenteeism: {prediction:.2f} hours'
         })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
 
+    except Exception as e:
+        import traceback
+        print("❌ Error during prediction:\n", traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
+
+# ---------------------------------------------------------------------------- #
+#  Model info & feature importance routes
+# ---------------------------------------------------------------------------- #
 @app.route('/api/model_info', methods=['GET'])
 def model_info():
-    """API endpoint for model information and fairness metrics"""
     try:
-        model_info = {
+        info = {
             'model_type': 'Linear Regression',
             'performance': {
-                'baseline': {
-                    'rmse': 11.4292,
-                    'mae': 6.4389,
-                    'r2_score': -0.1987
-                },
-                'mitigated': {
-                    'rmse': 43.1228,
-                    'mae': 16.5046,
-                    'r2_score': -0.0875
-                }
+                'baseline': {'rmse': 11.4292, 'mae': 6.4389, 'r2_score': -0.1987},
+                'mitigated': {'rmse': 43.1228, 'mae': 16.5046, 'r2_score': -0.0875}
             },
             'fairness_metrics': {
                 'baseline': {
@@ -166,40 +175,37 @@ def model_info():
                 ]
             },
             'limitations': [
-                'Model performance is limited due to data imbalance',
+                'Model performance limited due to data imbalance',
                 'Predictions may not be accurate for extreme cases',
-                'Model trained on a specific industry dataset; may not generalize'
+                'Model trained on specific industry dataset; may not generalize'
             ]
         }
-        
-        return jsonify(model_info)
-    
+        return jsonify(info)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/feature_importance', methods=['GET'])
 def feature_importance():
-    """API endpoint for feature importance"""
     try:
         if model is None or feature_columns is None:
             return jsonify({'error': 'Model not loaded'}), 500
-        
-        # Get feature importance from linear regression coefficients
-        importance = []
-        for i, feature in enumerate(feature_columns):
-            importance.append({
-                'feature': feature,
-                'importance': abs(model.coef_[i]) if hasattr(model, 'coef_') else 0
-            })
-        
-        # Sort by importance
+
+        importance = [
+            {'feature': feature, 'importance': abs(model.coef_[i])}
+            for i, feature in enumerate(feature_columns)
+        ]
         importance.sort(key=lambda x: x['importance'], reverse=True)
-        
         return jsonify(importance[:10])
-    
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# ---------------------------------------------------------------------------- #
+#  Main entry point
+# ---------------------------------------------------------------------------- #
 if __name__ == '__main__':
     load_model()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # host 0.0.0.0 required for Render
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
