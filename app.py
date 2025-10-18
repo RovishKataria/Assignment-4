@@ -18,8 +18,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
-# CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
-CORS(app, origins=['https://assignment-4-o9gt.onrender.com/'])
+CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
 
 # Global variables to store the trained model and scaler
 model = None
@@ -36,7 +35,7 @@ def load_model():
             model_data = pickle.load(f)
             model = model_data['model']
             scaler = model_data['scaler']
-            feature_columns = model_data['feature_columns']
+            feature_columns = model_data['feature_names']  # Changed from 'feature_columns' to 'feature_names'
         print("Model loaded successfully")
     except FileNotFoundError:
         print("Model file not found. Please train the model first (python train_model.py).")
