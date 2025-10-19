@@ -28,9 +28,9 @@ wheels/
 .installed.cfg
 *.egg
 
-# Model files
-model.pkl
+# Model files - keep other pkls ignored, but allow the one your app needs:
 *.pkl
+!model.pkl
 
 # Node.js
 node_modules/

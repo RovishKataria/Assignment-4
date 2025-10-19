@@ -16,7 +16,7 @@ services:
       # - key: MODEL_PATH
       #   value: model.pkl
 
-  - type: static
+  - type: static_site
     name: absenteeism-frontend
     rootDir: frontend
     buildCommand: npm ci && npm run build
