@@ -9,10 +9,9 @@ services:
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.5
       - key: CORS_ORIGINS
-        # TEMP: loosen while you bring up the frontend, then replace with the exact frontend URL
         value: "*"
-      # If your model file isn't "model.pkl", set it here:
+      # Uncomment if your model has a different name/path:
       # - key: MODEL_PATH
       #   value: model.pkl
