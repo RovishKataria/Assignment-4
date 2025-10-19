@@ -6,6 +6,7 @@ This Flask application serves the trained model from Assignment 2 and provides
 an API for the frontend interface.
 """
 
+import os
 import pandas as pd
 import numpy as np
 import pickle
@@ -17,15 +18,13 @@ from sklearn.linear_model import LinearRegression
 import warnings
 warnings.filterwarnings('ignore')
 
+# app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
+# CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000']
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
-# CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'])
-CORS(app, origins=[
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:5000',
-    'https://assignment-4-o9gt.onrender.com',  # your static site
-    'https://assig4-7h6s.onrender.com'        # if using a different API domain
-])
+cors_origins = os.environ.get('CORS_ORIGINS', '*')
+if ',' in cors_origins:
+    cors_origins = [o.strip() for o in cors_origins.split(',')]
+CORS(app, resources={r"/api/*": {"origins": cors_origins}})
 
 
 # Global variables to store the trained model and scaler
@@ -33,13 +32,15 @@ model = None
 scaler = None
 feature_columns = None
 
+MODEL_PATH = os.environ.get("MODEL_PATH", "model.pkl")
 def load_model():
     """Load the trained model and scaler from Assignment 2"""
     global model, scaler, feature_columns
     
     try:
         # Load the model and scaler (we'll create these from Assignment 2)
-        with open('model.pkl', 'rb') as f:
+        # with open('model.pkl', 'rb') as f:
+        with open(MODEL_PATH, 'rb') as f:
             model_data = pickle.load(f)
             model = model_data['model']
             scaler = model_data['scaler']
@@ -202,4 +203,10 @@ def feature_importance():
 
 if __name__ == '__main__':
     load_model()
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
+# Ensure model is loaded when the app module is imported (gunicorn workers)
+load_model()
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

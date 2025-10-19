@@ -1,25 +1,26 @@
 services:
-  # Flask backend as a web service
   - type: web
-    name: assignment4-backend
-    runtime: python      # this makes it a Python web service
-    branch: main
-    rootDir: .           # directory with app.py and requirements.txt
+    name: absenteeism-api
+    env: python
     plan: free
-    buildCommand: pip install --no-cache-dir -r requirements.txt
-    startCommand: gunicorn app:app
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9
+        value: 3.11
+      - key: CORS_ORIGINS
+        value: https://absenteeism-frontend.onrender.com
+      # Optional, if you change model location:
+      # - key: MODEL_PATH
+      #   value: model.pkl
 
-  # React frontend as a static site
-  - type: web           # still "web", not "static"
-    name: assignment4-frontend
-    runtime: static      # indicates this is a static site
-    branch: main
-    rootDir: frontend    # where package.json and source files live
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist  # folder to publish after build
+  - type: static
+    name: absenteeism-frontend
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    publishPath: dist
     envVars:
-      - key: VITE_API_URL
-        value: https://assignment4-backend.onrender.com/api
+      - key: VITE_API_BASE_URL
+        value: https://absenteeism-api.onrender.com/api

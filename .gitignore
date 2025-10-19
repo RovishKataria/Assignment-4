@@ -5,13 +5,16 @@ ENV/
 
 # Python
 __pycache__/
+.pyc
+*.pyo
+*.pyd
 *.py[cod]
 *$py.class
 *.so
 .Python
 build/
 develop-eggs/
-
+dist/
 downloads/
 eggs/
 .eggs/
@@ -38,8 +41,9 @@ yarn-error.log*
 .yarn-integrity
 
 # React/Vite
-
+frontend/dist/
 frontend/.vite/
+frontend/node_modules/
 
 # IDE
 .vscode/
@@ -62,7 +66,4 @@ Thumbs.db
 .env.production.local
 
 frontend/node_modules/
-
-venv/
 __MACOSX/
-*.pyc

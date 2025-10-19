@@ -41,8 +41,7 @@ import {
 import axios from 'axios';
 
 // const API_BASE_URL = 'http://localhost:5000/api';
-// const API_BASE_URL = 'https://assig4-7h6s.onrender.com/';
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 function App() {
   // Form state uses friendly keys; we'll map to backend field names on submit
