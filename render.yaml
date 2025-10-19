@@ -11,17 +11,8 @@ services:
       - key: PYTHON_VERSION
         value: 3.11
       - key: CORS_ORIGINS
-        value: https://absenteeism-frontend.onrender.com
-      # If you renamed/relocated the model file, set MODEL_PATH:
+        # TEMP: loosen while you bring up the frontend, then replace with the exact frontend URL
+        value: "*"
+      # If your model file isn't "model.pkl", set it here:
       # - key: MODEL_PATH
       #   value: model.pkl
-
-  # Static site using legacy keys (no rootDir/publishPath)
-  # NOTE: staticPublishPath is relative to the repo root.
-  - type: static
-    name: absenteeism-frontend
-    buildCommand: npm ci --prefix frontend && npm run build --prefix frontend
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://absenteeism-api.onrender.com/api
